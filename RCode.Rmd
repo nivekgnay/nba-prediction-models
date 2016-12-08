@@ -1,0 +1,46 @@
+---
+title: "PDS NBA Proj"
+author: "Derek Young"
+date: "12/7/2016"
+output: html_document
+---
+
+```{r}
+data <- read.csv(file="home_games_with_cutoff.csv", header=TRUE, sep=",")
+# Only look at one season for now and only mavs (team ID 1610612742)
+seasonTable = data[data$season_id == 22004,]
+team = seasonTable[(seasonTable$team_abbreviation == "DAL" | seasonTable$opp_team_id == 1610612742), ]
+# Get all of the home and away back to backs 
+homeBB = team[team$home_back == 1,]
+# Get all of the home non back to backs
+nonBB = team[team$home_back != 1,]
+
+# Get all of the away back to backs 
+homeBB = team[team$home_back == 1,]
+# Get all of the home non back to backs
+nonBB = team[team$home_back != 1,]
+
+# Find the records corresponding to back to back games and non back to back games
+homeBBWin = homeBB[homeBB$wl_binary == 1,]
+homeNonBBWin = nonBB[nonBB$wl_binary == 1,]
+# Num of back to back games (total played) and num of back to back wins 
+nrow(homeBB)
+nrow(homeBBWin)
+# Num of back to back games (total played) and num of back to back wins 
+nrow(nonBB)
+nrow(homeNonBBWin)
+# Hypothesis test - is the true mean win loss percentage different for back to back than non-back to back games? Test at alpha = 0.05. 
+# Null: Mu back to back = Mu non back to back
+# Alt: These means are different 
+xbar = (nrow(homeBBWin) / nrow(homeBB)) - (nrow(nonBB) - nrow(homeNonBBWin))
+#v1 = sd(homeBBWin$)
+#v2 = sd()
+n1 = nrow(homeBBWin)
+n2 = nrow(homeNonBBWin)
+pooledDenom = sqrt((v1 / n1) + (v2/n2))
+#t = (xbar−mu0)/(s/sqrt(n)) 
+#pval = 2 ∗ (pt(t, df= n−1))
+
+```
+
+
