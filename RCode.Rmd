@@ -40,6 +40,12 @@ n2 = nrow(homeNonBBWin)
 pooledDenom = sqrt((v1 / n1) + (v2/n2))
 #t = (xbar−mu0)/(s/sqrt(n)) 
 #pval = 2 ∗ (pt(t, df= n−1))
+```
+
+```{R}
+
+
+
 
 ```
 
