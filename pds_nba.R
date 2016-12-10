@@ -2,37 +2,31 @@
 dta = read.csv("home_games_with_cutoff_elev.csv")
 dta_no_cutoff = read.csv("home_games_with_no_cutoff_elev.csv")
 
-#dta_elev = read.csv("home_games_with_cutoff_elev.csv")
-#season1
+
 train = dta[which(dta$season_id < 22010 & dta$season_id >= 22005),]
 validate = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22010 & dta_no_cutoff$season_id <= 22012),]
-test = dta_no_cutoff[which(dta_no_cutoff$season_id == 22015),] #& dta_no_cutoff$season_id <= 22015),]
+test = dta_no_cutoff[which(dta_no_cutoff$season_id == 22015),]
 attach(train)
-attach(season1)
 
-#Initial Eda for Modeling
+
+#Initial EDA for Modeling
 all.vars = cbind(plus_minus,home_win_pct,away_win_pct,home_avg_pt_diff,away_avg_pt_diff,
                 home_win_pct_N,away_win_pct_N,away_win_pct_as_away,home_win_pct_as_home,
-                home_back_to_back,away_back_to_back)
+                home_back_to_back,away_back_to_back,elevation)
 all.names =  c("plus_minus","home_win_pct","away_win_pct","home_avg_pt_diff","away_avg_pt_diff",
                "home_win_pct_N","away_win_pct_N","away_win_pct_as_away","home_win_pct_as_home",
-               "home_back_to_back","away_back_to_back")
+               "home_back_to_back","away_back_to_back","elevation")
+
 uni.eda = function(data,vars,label){
   predvars = vars
-  
   n.row = ceiling(sqrt(ncol(predvars)+1))
   par(mfrow=c(3,4))
   for(i in 1:ncol(predvars)){
-    #if (class(data[,i]) == "integer" | class(data[,i]) == "numeric"){ #continuous predictors
       hist(predvars[,i],xlab = label[i],main=label[i],
            col="light gray",cex.main=1.25,cex.lab=1.20)
-    #}
-    #else{ #categorical predictors
-    #  plot(dta[,i],xlab = label[i],main=label[i],
-    #       col="dark gray",cex.main=1.25,cex.lab=1.2)
-    #}
   }
 }
+
 uni.eda(fin,all.vars,all.names)
 
 ###Multivariate EDA
