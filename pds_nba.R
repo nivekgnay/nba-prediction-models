@@ -1,8 +1,8 @@
 ### CUTOFF OF 10 with N = 8
 dta = read.csv("home_games_with_cutoff_elev.csv")
-dta_no_cutoff = read.csv("home_games_with_no_cutoff_elev.csv")
+dta_no_cutoff = read.csv("home_games_with_cutoff_elev_mileage_2005.csv")
 
-
+dta = dta_no_cutoff[which(dta_no_cutoff$home_game_count >= 10),]
 train = dta[which(dta$season_id < 22010 & dta$season_id >= 22005),]
 validate = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22010 & dta_no_cutoff$season_id <= 22012),]
 test = dta_no_cutoff[which(dta_no_cutoff$season_id == 22015),]
@@ -35,7 +35,9 @@ check_cors = function(vars) {
   source("panelfxns.R")
   pairs(vars,upper.panel = panel.smooth,lower.panel = panel.cor)
 }
+
 check_cors(all.vars)
+
 init_lm = lm(plus_minus~home_avg_pt_diff+
                away_avg_pt_diff+home_win_pct_N+away_win_pct_N+
                away_win_pct_as_away+home_win_pct_as_home+
@@ -67,7 +69,7 @@ accuracy_check = function(lm,data){ #takes in a linear model and dataframe
       #print(length(predicts))
       win.loss = ifelse(season.dal.test$wl=="W",1,0)
       compare = predicts==win.loss
-      print(paste(names[i],toString(sum(compare)/length(predicts))))
+      #print(paste(names[i],toString(sum(compare)/length(predicts))))
       total = total + sum(compare)/length(predicts)
     }
   }
@@ -100,11 +102,11 @@ summary(new_model2)
 #Model with elevation
 model_elevate = lm(plus_minus~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
                      home_back_to_back+away_back_to_back+home_win_pct_as_home+
-                     away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation+
-                     elevation*home_win_pct_as_home)#,data=train)
+                     away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+
+                     elevation+elevation*home_win_pct_as_home+home_mileage)#,data=train)
+
 summary(model_elevate)
-pls = lm(formula = plus_minus ~ home_win_pct + away_win_pct + home_back_to_back + 
-     away_back_to_back + elevation)
+
 #check accuracy
 accuracy_check(naive_lm,dta_no_cutoff)
 accuracy_check(init_lm,dta_no_cutoff)
@@ -148,11 +150,13 @@ train = train[-2492,]
 ### logistic regression
 wl = ifelse(train$wl == "W",1,0)
 log_model2 = glm(wl~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
-                  home_back_to_back+away_back_to_back+home_win_pct_as_home+
-                  away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation+
-                  elevation*home_win_pct_as_home,data=train,family=binomial(link="logit"))
+                   home_back_to_back+away_back_to_back+home_win_pct_as_home+
+                   away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation+
+                   ,data=train,family=binomial(link="logit"))
 summary(log_model2)
 accuracy_check(log_model2,validate)
 
 
-#distance from previous game
+#make some last couple features: 
+
+
