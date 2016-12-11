@@ -5,17 +5,17 @@ dta_no_cutoff = read.csv("home_games_with_cutoff_elev_mileage_2005.csv")
 dta = dta_no_cutoff[which(dta_no_cutoff$home_game_count >= 10),]
 train = dta[which(dta$season_id < 22010 & dta$season_id >= 22005),]
 validate = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22010 & dta_no_cutoff$season_id <= 22012),]
-test = dta_no_cutoff[which(dta_no_cutoff$season_id == 22015),]
+test = dta_no_cutoff[which(dta_no_cutoff$season_id = 22015),]
 attach(train)
 
 
 #Initial EDA for Modeling
 all.vars = cbind(plus_minus,home_win_pct,away_win_pct,home_avg_pt_diff,away_avg_pt_diff,
                 home_win_pct_N,away_win_pct_N,away_win_pct_as_away,home_win_pct_as_home,
-                home_back_to_back,away_back_to_back,elevation)
+                home_back_to_back,away_back_to_back,elevation,home_mileage,away_mileage)
 all.names =  c("plus_minus","home_win_pct","away_win_pct","home_avg_pt_diff","away_avg_pt_diff",
                "home_win_pct_N","away_win_pct_N","away_win_pct_as_away","home_win_pct_as_home",
-               "home_back_to_back","away_back_to_back","elevation")
+               "home_back_to_back","away_back_to_back","elevation","home_mileage","away_mileage")
 
 uni.eda = function(data,vars,label){
   predvars = vars
@@ -118,45 +118,40 @@ accuracy_check(pls,validate)
 
 
 
-par(mfrow=c(1,1))
-qqnorm(model_elevate$res,main="Q-Q Plot for Number of Shares")
-qqline(model_elevate$res,col="red")
-
-###Outlier Removal (Code from Rebecca Nugent (36-401))
-back_to_back_interact = train$away_back_to_back*train$away_win_pct_as_away
-X<- cbind(1,train$home_win_pct+train$away_win_pct+train$home_win_pct_N+train$away_win_pct_N+
-            train$home_back_to_back+train$away_back_to_back+train$home_win_pct_as_home+
-            train$away_win_pct_as_away+back_to_back_interact)
-H<-X%*%solve(t(X)%*%X)%*%t(X) 
-n<-nrow(X)
-p<-ncol(X)
-SSE<-sum(new_model2$res^2) 
-MSE<-SSE/(n-p)
-res<-new_model2$res 
-del.res<-res*sqrt((n-p-1)/(SSE*(1-diag(H))-res^2)) 
-#sort(abs(del.res))[1:10]
-out.cand = sort(abs(del.res))[(n-10):n] #abs for two sided comp.
-alpha<-0.2
-cutoff = qt(1-alpha/(2*n),n-p-1)
-
-mean.h<-p/n 
-which(diag(H)>2*mean.h) 
-u = sort(diag(H))[(n-10):n]
-(u - mean(u))/sd(u)
-order(diag(H))[(n-10):n]
-
-train = train[-2492,]
+par(mfrow=c(1,2))
+qqnorm(model_elevate$res,main="Q-Q Plot for plus_minus")
+qqline(model_elevate$res,col="red",lwd=2)
+plus_minus.t = plus_minus + abs(min(plus_minus)) + 1
+check = boxcox(plus_minus.t~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
+                 home_back_to_back+away_back_to_back+home_win_pct_as_home+
+                 away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+
+                 elevation+elevation*home_win_pct_as_home+home_mileage)
+title(main="BoxCox Transformation")
 
 ### logistic regression
 wl = ifelse(train$wl == "W",1,0)
 log_model2 = glm(wl~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
                    home_back_to_back+away_back_to_back+home_win_pct_as_home+
-                   away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation+
+                   away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation
                    ,data=train,family=binomial(link="logit"))
 summary(log_model2)
 accuracy_check(log_model2,validate)
 
 
-#make some last couple features: 
-
+#residuals diagnostics
+par(mfrow=c(2,4))
+plot(home_win_pct,model_elevate$res,main="home_win_pct vs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
+plot(away_win_pct,model_elevate$res,main="away_win_pct vs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
+plot(home_win_pct_N,model_elevate$res,main="home_win_pct_N vs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
+plot(away_win_pct_N,model_elevate$res,main="away_win_pct_Nvs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
+plot(home_win_pct_as_home,model_elevate$res,main="home_win_pct_as_home vs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
+plot(away_win_pct_as_away,model_elevate$res,main="away_win_pct_as_away vs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
+plot(elevation,model_elevate$res,main="elevation vs. Residuals",ylab="Residuals")
+abline(h=0,col="red",lty=2)
 
