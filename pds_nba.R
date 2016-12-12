@@ -1,11 +1,12 @@
 ### CUTOFF OF 10 with N = 8
 dta = read.csv("home_games_with_cutoff_elev.csv")
-dta_no_cutoff = read.csv("home_games_with_cutoff_elev_mileage_2005.csv")
+dta_no_cutoff = read.csv("final_csv_1.csv")
+dta_no_cutoff = dta_no_cutoff[which(dta_no_cutoff$is_home == 1),]
 
 dta = dta_no_cutoff[which(dta_no_cutoff$home_game_count >= 10),]
 train = dta[which(dta$season_id < 22010 & dta$season_id >= 22005),]
 validate = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22010 & dta_no_cutoff$season_id <= 22012),]
-test = dta_no_cutoff[which(dta_no_cutoff$season_id = 22015),]
+test = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22013),]
 attach(train)
 
 
@@ -76,45 +77,29 @@ accuracy_check = function(lm,data){ #takes in a linear model and dataframe
   paste("Avg Accuracy Rate",toString((total/length(names))*100))
 }
 ####
-#Model - Naive
-naive_lm = lm(plus_minus~home_win_pct + away_win_pct,data=season1)
-summary(naive_lm)
-#Model - all variables
-init_lm = lm(plus_minus~home_avg_pt_diff+
-               away_avg_pt_diff+home_win_pct_N+away_win_pct_N+
-               away_win_pct_as_away+home_win_pct_as_home+
-               home_back_to_back+away_back_to_back,data=season1)#+home_win_pct*away_back_to_back)
-summary(init_lm)
-#Model - Special case 1
-new_model1 = lm(plus_minus~home_avg_pt_diff+
-                  away_avg_pt_diff+home_win_pct_N+away_win_pct_N+
-                  home_win_pct_as_home+
-                  home_back_to_back+away_back_to_back+home_win_pct*away_back_to_back,data=season1)
-summary(new_model1)
-
-
-#Model - Special case 2
-new_model2 = lm(plus_minus~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
-                  home_back_to_back+away_back_to_back+home_win_pct_as_home+
-                  away_win_pct_as_away+away_back_to_back:away_win_pct_as_away)#,data=train)#+home_avg_pt_diff+away_avg_pt_diff,data=train)
-summary(new_model2)
-
 #Model with elevation
-model_elevate = lm(plus_minus~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
+model_elevate = lm(plus_minus~home_win_pct+away_win_pct+home_win_pct_11+away_win_pct_11+
                      home_back_to_back+away_back_to_back+home_win_pct_as_home+
-                     away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+
-                     elevation+elevation*home_win_pct_as_home+home_mileage)#,data=train)
+                     away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+home_mileage+
+                     elevation+elevation*home_win_pct_as_home)#,data=train)
 
 summary(model_elevate)
 
 #check accuracy
-accuracy_check(naive_lm,dta_no_cutoff)
-accuracy_check(init_lm,dta_no_cutoff)
-accuracy_check(new_model1,dta_no_cutoff)
-accuracy_check(naive_lm,dta)
-accuracy_check(new_model2,validate)
 accuracy_check(model_elevate,validate)
-accuracy_check(pls,validate)
+
+### Now running test
+train = dta[which(dta$season_id < 22012 & dta$season_id >= 22005),]
+validate = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22010 & dta_no_cutoff$season_id <= 22012),]
+test = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22013 & dta_no_cutoff$season_id <22016),]
+model_elevate = lm(plus_minus~home_win_pct+away_win_pct+home_win_pct_11+away_win_pct_11+
+                     home_back_to_back+away_back_to_back+home_win_pct_as_home+
+                     away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+
+                     elevation+elevation*home_win_pct_as_home)
+accuracy_check(model_elevate,test)
+
+train = dta[which(dta$season_id < 22014 & dta$season_id >= 22005),]
+test = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22015 & dta_no_cutoff$season_id <22016),]
 
 
 
@@ -130,12 +115,15 @@ title(main="BoxCox Transformation")
 
 ### logistic regression
 wl = ifelse(train$wl == "W",1,0)
-log_model2 = glm(wl~home_win_pct+away_win_pct+home_win_pct_N+away_win_pct_N+
+log_model2 = glm(wl~home_win_pct+away_win_pct+home_win_pct_11+away_win_pct_11+
                    home_back_to_back+away_back_to_back+home_win_pct_as_home+
-                   away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation
+                   away_win_pct_as_away+away_back_to_back:away_win_pct_as_away+elevation +elevation+elevation*home_win_pct_as_home
                    ,data=train,family=binomial(link="logit"))
 summary(log_model2)
-accuracy_check(log_model2,validate)
+accuracy_check(log_model2,test)
+
+train = dta[which(dta$season_id < 22014 & dta$season_id >= 22005),]
+test = dta_no_cutoff[which(dta_no_cutoff$season_id >= 22015 & dta_no_cutoff$season_id <22016),]
 
 
 #residuals diagnostics
